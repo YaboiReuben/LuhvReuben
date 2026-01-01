@@ -40,9 +40,31 @@ export default function App() {
   const [passwordInput, setPasswordInput] = useState('');
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
 
+  // Mobile Menu State
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   // Form State
   const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
   const [formStatus, setFormStatus] = useState<'idle' | 'success'>('idle');
+
+  // Handle Scroll to Section
+  const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
+    e.preventDefault();
+    const element = document.getElementById(id);
+    if (element) {
+      const offset = 80; // height of fixed nav
+      const bodyRect = document.body.getBoundingClientRect().top;
+      const elementRect = element.getBoundingClientRect().top;
+      const elementPosition = elementRect - bodyRect;
+      const offsetPosition = elementPosition - offset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+    setIsMobileMenuOpen(false);
+  };
 
   // Handle Logo Clicks for Admin Access
   const handleLogoClick = () => {
@@ -104,6 +126,14 @@ export default function App() {
 
   const deleteMessage = (id: string) => setMessages(prev => prev.filter(m => m.id !== id));
 
+  const navLinks = [
+    { name: 'About', id: 'about' },
+    { name: 'Projects', id: 'projects' },
+    { name: 'Edits', id: 'edits' },
+    { name: 'Contact', id: 'contact' },
+    { name: 'Socials', id: 'socials' }
+  ];
+
   return (
     <div className="bg-black text-white min-h-screen selection:bg-neonGreen selection:text-black">
       {/* Header */}
@@ -122,12 +152,18 @@ export default function App() {
             </span>
           </div>
 
+          {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-8 text-sm font-bold uppercase tracking-widest">
-            <a href="#about" className="hover:text-neonGreen transition-colors">About</a>
-            <a href="#projects" className="hover:text-neonGreen transition-colors">Projects</a>
-            <a href="#edits" className="hover:text-neonGreen transition-colors">Edits</a>
-            <a href="#contact" className="hover:text-neonGreen transition-colors">Contact</a>
-            <a href="#socials" className="hover:text-neonGreen transition-colors">Socials</a>
+            {navLinks.map(link => (
+              <a 
+                key={link.id}
+                href={`#${link.id}`} 
+                onClick={(e) => scrollToSection(e, link.id)}
+                className="hover:text-neonGreen transition-colors"
+              >
+                {link.name}
+              </a>
+            ))}
             {isAdminLoggedIn && (
               <button 
                 onClick={() => setIsAdminMode(!isAdminMode)}
@@ -138,10 +174,37 @@ export default function App() {
             )}
           </div>
 
+          {/* Mobile Toggle */}
           <div className="md:hidden">
-            <Menu className="w-8 h-8 text-neonGreen" />
+            <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2">
+              {isMobileMenuOpen ? <X className="w-8 h-8 text-neonGreen" /> : <Menu className="w-8 h-8 text-neonGreen" />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden absolute top-full left-0 right-0 bg-black border-b border-neonGreen/20 p-6 flex flex-col gap-6 font-black uppercase tracking-widest animate-in slide-in-from-top duration-300">
+            {navLinks.map(link => (
+              <a 
+                key={link.id}
+                href={`#${link.id}`} 
+                onClick={(e) => scrollToSection(e, link.id)}
+                className="text-xl hover:text-neonGreen transition-colors"
+              >
+                {link.name}
+              </a>
+            ))}
+            {isAdminLoggedIn && (
+              <button 
+                onClick={() => { setIsAdminMode(!isAdminMode); setIsMobileMenuOpen(false); }}
+                className="bg-neonGreen text-black px-6 py-3 rounded text-center"
+              >
+                {isAdminMode ? 'View Site' : 'Admin Panel'}
+              </button>
+            )}
+          </div>
+        )}
       </nav>
 
       {/* Main Content Sections */}
@@ -173,6 +236,7 @@ export default function App() {
               <div className="mt-10">
                 <a 
                   href="#about"
+                  onClick={(e) => scrollToSection(e, 'about')}
                   className="px-8 py-4 bg-neonGreen text-black font-black uppercase tracking-widest rounded-full hover:scale-110 transition-transform neon-glow inline-block"
                 >
                   Enter My World
@@ -182,7 +246,7 @@ export default function App() {
           </section>
 
           {/* About Me Section */}
-          <section id="about" className="py-24 px-6 bg-darkBg border-y border-neonGreen/10">
+          <section id="about" className="py-24 px-6 bg-darkBg border-y border-neonGreen/10 scroll-mt-20">
             <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-16">
               <div className="w-full md:w-1/3 flex justify-center">
                 <div className="relative group">
@@ -226,7 +290,7 @@ export default function App() {
           </section>
 
           {/* Upcoming Projects Section */}
-          <section id="projects" className="py-24 px-6">
+          <section id="projects" className="py-24 px-6 scroll-mt-20">
             <div className="max-w-7xl mx-auto">
               <SectionTitle title="Upcoming Projects" subtitle="What I'm currently building and playing" />
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -258,12 +322,16 @@ export default function App() {
           </section>
 
           {/* Edits Section */}
-          <section id="edits" className="py-24 px-6 bg-cardBg/50">
+          <section id="edits" className="py-24 px-6 bg-cardBg/50 scroll-mt-20">
             <div className="max-w-7xl mx-auto">
               <SectionTitle title="Edits" subtitle="Click to view the magic" />
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {edits.map(edit => (
-                  <div key={edit.id} className="group relative overflow-hidden rounded-2xl aspect-[4/5] cursor-pointer">
+                  <div 
+                    key={edit.id} 
+                    onClick={() => { if(edit.videoUrl !== '#') window.open(edit.videoUrl, '_blank'); }}
+                    className="group relative overflow-hidden rounded-2xl aspect-[4/5] cursor-pointer"
+                  >
                     <img src={edit.thumbnail} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt={edit.title} />
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60"></div>
                     <div className="absolute bottom-0 left-0 right-0 p-6">
@@ -282,7 +350,7 @@ export default function App() {
           </section>
 
           {/* Contact Section */}
-          <section id="contact" className="py-24 px-6">
+          <section id="contact" className="py-24 px-6 scroll-mt-20">
             <div className="max-w-4xl mx-auto">
               <SectionTitle title="Contact Me" />
               <div className="bg-cardBg border border-neonGreen/10 rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden">
@@ -351,7 +419,7 @@ export default function App() {
           </section>
 
           {/* Socials Section */}
-          <section id="socials" className="py-24 px-6 bg-neonGreen text-black">
+          <section id="socials" className="py-24 px-6 bg-neonGreen text-black scroll-mt-20">
             <div className="max-w-7xl mx-auto text-center">
               <h2 className="text-4xl md:text-6xl font-black uppercase mb-12 tracking-tighter">Follow The Journey</h2>
               <div className="flex flex-wrap justify-center gap-8">
@@ -359,6 +427,7 @@ export default function App() {
                   <a 
                     key={social.name}
                     href={social.url}
+                    onClick={(e) => { if(social.url === '#') e.preventDefault(); }}
                     className="flex flex-col items-center gap-4 group"
                   >
                     <div className="w-20 h-20 rounded-full bg-black text-neonGreen flex items-center justify-center transition-transform group-hover:scale-125 group-hover:-rotate-12 shadow-xl">
@@ -544,7 +613,7 @@ export default function App() {
       {/* Footer */}
       <footer className="py-20 px-6 border-t border-white/5 bg-black">
         <div className="max-w-7xl mx-auto flex flex-col items-center gap-12 text-center">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
             <img 
               src="https://static.wikia.nocookie.net/c4276565-66a0-4efb-a31a-c995fc4317e0/scale-to-width/370" 
               className="w-16 h-16 rounded-full border border-neonGreen neon-glow"
@@ -554,11 +623,16 @@ export default function App() {
           </div>
           
           <div className="flex flex-wrap justify-center gap-8 font-black uppercase tracking-widest text-sm">
-            <a href="#about" className="hover:text-neonGreen transition-colors">About Me</a>
-            <a href="#projects" className="hover:text-neonGreen transition-colors">Projects</a>
-            <a href="#edits" className="hover:text-neonGreen transition-colors">Edits</a>
-            <a href="#contact" className="hover:text-neonGreen transition-colors">Contact</a>
-            <a href="#socials" className="hover:text-neonGreen transition-colors">Socials</a>
+            {navLinks.map(link => (
+              <a 
+                key={link.id}
+                href={`#${link.id}`} 
+                onClick={(e) => scrollToSection(e, link.id)}
+                className="hover:text-neonGreen transition-colors"
+              >
+                {link.name}
+              </a>
+            ))}
           </div>
 
           <div className="text-gray-500 font-medium">
